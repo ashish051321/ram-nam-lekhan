@@ -337,7 +337,7 @@
     const hanumanEl = document.getElementById('hanuman');
     pageEl.focus({ preventScroll: true });
     let count = 0;
-    let isWritingEnabled = false;
+    let isWritingEnabled = true;
     let isSoundEnabled = true;
     
     // Audio element for playing the chant file
@@ -482,7 +482,7 @@
     function toggleWriting() {
       isWritingEnabled = !isWritingEnabled;
       if (isWritingEnabled) {
-        toggleButton.textContent = "Stop Writing";
+        toggleButton.textContent = "Pause";
         toggleButton.classList.remove('disabled');
       } else {
         toggleButton.textContent = "Start Writing";
@@ -494,7 +494,7 @@
       currentBackgroundIndex = (currentBackgroundIndex + 1) % backgroundImages.length;
       const newImage = backgroundImages[currentBackgroundIndex];
       
-      // Update the background image with proper sizing
+      // Update the background image with proper sizing (instant change)
       document.body.style.backgroundImage = `url('${newImage}'), linear-gradient(90deg, transparent 0 64px, var(--margin) 64px 66px, transparent 66px), repeating-linear-gradient(to bottom, var(--paper), var(--paper) calc(var(--font-size) * var(--line-height) - 2px), var(--rule) 0, var(--rule) calc(var(--font-size) * var(--line-height)))`;
       document.body.style.backgroundSize = 'cover, 100% 100%, 100% 100%';
       document.body.style.backgroundPosition = 'center center, 0 0, 0 0';
@@ -517,8 +517,9 @@
       updateCounter();
     }
 
-    // Initialize toggle button state
-    toggleButton.classList.add('disabled');
+    // Initialize toggle button state (writing enabled by default)
+    toggleButton.textContent = "Pause";
+    toggleButton.classList.remove('disabled');
     
     // Initialize sound toggle button state
     soundToggle.classList.add('disabled');
