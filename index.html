@@ -328,9 +328,134 @@
     #whatsappShare:active {
       transform: scale(0.95);
     }
+    /* Consent Popup Styles */
+    #consentPopup {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      max-width: 500px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      font-family: "Kalam", system-ui, -apple-system, "Noto Sans Devanagari", "Noto Sans", sans-serif;
+    }
+    
+    #consentPopup.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    
+    #consentPopup h3 {
+      margin: 0 0 12px 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: #333;
+      text-align: center;
+    }
+    
+    #consentPopup p {
+      margin: 0 0 16px 0;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #555;
+      text-align: center;
+    }
+    
+    .consent-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+    
+    .consent-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    
+    .consent-accept {
+      background: #22c55e;
+      color: white;
+    }
+    
+    .consent-accept:hover {
+      background: #16a34a;
+      transform: translateY(-1px);
+    }
+    
+    .consent-decline {
+      background: #f3f4f6;
+      color: #374151;
+      border: 1px solid #d1d5db;
+    }
+    
+    .consent-decline:hover {
+      background: #e5e7eb;
+      transform: translateY(-1px);
+    }
+    
+    .consent-settings {
+      margin-top: 12px;
+      text-align: center;
+    }
+    
+    .consent-settings a {
+      color: #6b7280;
+      text-decoration: none;
+      font-size: 12px;
+    }
+    
+    .consent-settings a:hover {
+      color: #374151;
+      text-decoration: underline;
+    }
+    
+    @media (max-width: 768px) {
+      #consentPopup {
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        padding: 16px;
+      }
+      
+      .consent-buttons {
+        flex-direction: column;
+      }
+      
+      .consent-btn {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
+  <!-- Consent Popup -->
+  <div id="consentPopup">
+    <h3>🍪 Privacy & Analytics</h3>
+    <p>We use Google Analytics to understand how visitors interact with our site. This helps us improve the experience. Your data is handled according to our privacy policy.</p>
+    <div class="consent-buttons">
+      <button class="consent-btn consent-accept" id="acceptAnalytics">Accept</button>
+      <button class="consent-btn consent-decline" id="declineAnalytics">Decline</button>
+    </div>
+    <div class="consent-settings">
+      <a href="#" id="privacyLink">Privacy Policy</a>
+    </div>
+  </div>
+
   <div id="counter">0 ✍️</div>
   <button id="toggleButton">Start Writing</button>
   <button id="backgroundSwitcher">🎨</button>
@@ -354,6 +479,136 @@
   </div>
 
   <script>
+    // Google Analytics Consent Management
+    const CONSENT_KEY = 'analytics_consent';
+    const GA_MEASUREMENT_ID = 'G-1DMWLTPZHE';
+    
+    // Check if user has already given consent
+    function hasConsent() {
+      return localStorage.getItem(CONSENT_KEY) === 'accepted';
+    }
+    
+    // Check if user has declined consent
+    function hasDeclined() {
+      return localStorage.getItem(CONSENT_KEY) === 'declined';
+    }
+    
+    // Save consent preference
+    function saveConsent(consent) {
+      localStorage.setItem(CONSENT_KEY, consent);
+    }
+    
+    // Load Google Analytics
+    function loadGoogleAnalytics() {
+      // Load gtag script
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
+      script.id = 'google-analytics-script';
+      document.head.appendChild(script);
+      
+      // Initialize gtag
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', GA_MEASUREMENT_ID);
+      
+      console.log('Google Analytics loaded with consent');
+    }
+    
+    // Disable Google Analytics
+    function disableGoogleAnalytics() {
+      // Remove the Google Analytics script
+      const existingScript = document.getElementById('google-analytics-script');
+      if (existingScript) {
+        existingScript.remove();
+      }
+      
+      // Clear dataLayer
+      if (window.dataLayer) {
+        window.dataLayer = [];
+      }
+      
+      // Disable gtag function
+      window.gtag = function() {
+        console.log('Google Analytics disabled - tracking blocked');
+      };
+      
+      console.log('Google Analytics disabled and tracking blocked');
+    }
+    
+    // Allow users to change their consent preference
+    function changeConsentPreference(newConsent) {
+      if (newConsent === 'accepted') {
+        saveConsent('accepted');
+        loadGoogleAnalytics();
+        console.log('User changed consent to accepted - Google Analytics enabled');
+      } else if (newConsent === 'declined') {
+        saveConsent('declined');
+        disableGoogleAnalytics();
+        console.log('User changed consent to declined - Google Analytics disabled');
+      }
+    }
+    
+    // Show consent popup
+    function showConsentPopup() {
+      const popup = document.getElementById('consentPopup');
+      popup.classList.add('show');
+    }
+    
+    // Hide consent popup
+    function hideConsentPopup() {
+      const popup = document.getElementById('consentPopup');
+      popup.classList.remove('show');
+    }
+    
+    // Handle accept analytics
+    function acceptAnalytics() {
+      saveConsent('accepted');
+      hideConsentPopup();
+      loadGoogleAnalytics();
+    }
+    
+    // Handle decline analytics
+    function declineAnalytics() {
+      saveConsent('declined');
+      hideConsentPopup();
+      disableGoogleAnalytics();
+      console.log('Google Analytics declined by user - tracking disabled');
+    }
+    
+    // Initialize consent management
+    function initConsent() {
+      if (hasConsent()) {
+        loadGoogleAnalytics();
+      } else if (hasDeclined()) {
+        // User previously declined - ensure GA is disabled
+        disableGoogleAnalytics();
+      } else {
+        // Show popup after a short delay for better UX
+        setTimeout(showConsentPopup, 1000);
+      }
+    }
+    
+    // Event listeners for consent buttons
+    document.addEventListener('DOMContentLoaded', function() {
+      const acceptBtn = document.getElementById('acceptAnalytics');
+      const declineBtn = document.getElementById('declineAnalytics');
+      const privacyLink = document.getElementById('privacyLink');
+      
+      if (acceptBtn) acceptBtn.addEventListener('click', acceptAnalytics);
+      if (declineBtn) declineBtn.addEventListener('click', declineAnalytics);
+      if (privacyLink) {
+        privacyLink.addEventListener('click', function(e) {
+          e.preventDefault();
+          alert('Privacy Policy: We collect anonymous usage data through Google Analytics to improve our service. No personal information is collected.');
+        });
+      }
+      
+      // Initialize consent management
+      initConsent();
+    });
+
     const pageEl = document.getElementById('page');
     const lineEl = document.getElementById('line');
     const counterEl = document.getElementById('counter');
