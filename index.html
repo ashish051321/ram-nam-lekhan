@@ -277,7 +277,16 @@
       lineEl.appendChild(svgWord);
       count++;
       updateCounter();
-      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+      
+      // Only auto-scroll if user is near the bottom of the page
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      const isNearBottom = (scrollTop + windowHeight) >= (documentHeight - 100);
+      
+      if (isNearBottom) {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+      }
     }
 
     function removeLast(){
