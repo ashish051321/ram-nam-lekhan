@@ -217,11 +217,67 @@
       background: rgba(213, 255, 200, 0.4);
       color: #666;
     }
+
+    /* Background Switcher Button */
+    #backgroundSwitcher {
+      position: fixed;
+      top: 12px;
+      right: 16px;
+      background: rgba(255, 255, 255, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #333;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      z-index: 999;
+      transition: transform 0.2s ease, background 0.2s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    #backgroundSwitcher:hover {
+      transform: scale(1.05);
+      background: rgba(255, 255, 255, 0.35);
+    }
+    #backgroundSwitcher:active {
+      transform: scale(0.95);
+      background: rgba(251, 255, 200, 0.4);
+    }
+
+    /* Hanuman Ji Floating Image */
+    #hanuman {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      width: 80px;
+      height: 80px;
+      background: url('./hanumanji.png') center center / contain no-repeat;
+      z-index: 998;
+      transition: transform 0.1s ease;
+      pointer-events: none;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    }
+
+    /* Chanting rotation animation */
+    @keyframes chant {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(5deg); }
+      50% { transform: rotate(0deg); }
+      75% { transform: rotate(5deg); }
+    }
+
+    #hanuman.chanting {
+      animation: chant 0.8s ease-in-out;
+    }
   </style>
 </head>
 <body>
   <div id="counter">0 ✍️</div>
   <button id="toggleButton">Start Writing</button>
+  <button id="backgroundSwitcher">🖼️</button>
+  <div id="hanuman"></div>
 
   <div class="wrap">
     <header>
@@ -243,9 +299,21 @@
     const lineEl = document.getElementById('line');
     const counterEl = document.getElementById('counter');
     const toggleButton = document.getElementById('toggleButton');
+    const backgroundSwitcher = document.getElementById('backgroundSwitcher');
+    const hanumanEl = document.getElementById('hanuman');
     pageEl.focus({ preventScroll: true });
     let count = 0;
     let isWritingEnabled = false;
+    
+    // Background images array
+    const backgroundImages = [
+      './lord-ram-background.jpg',
+      'https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=1920&h=1080&fit=crop&crop=center',
+      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1920&h=1080&fit=crop&crop=center',
+      'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&h=1080&fit=crop&crop=center'
+    ];
+    let currentBackgroundIndex = 0;
 
     function createAnimatedRam() {
       const ns = "http://www.w3.org/2000/svg";
@@ -307,6 +375,13 @@
       flashCounter();
     }
 
+    function triggerHanumanChanting() {
+      hanumanEl.classList.add('chanting');
+      setTimeout(() => {
+        hanumanEl.classList.remove('chanting');
+      }, 800);
+    }
+
     function writeRam(){
       if (!isWritingEnabled) return;
       
@@ -319,6 +394,9 @@
       lineEl.appendChild(svgWord);
       count++;
       updateCounter();
+      
+      // Trigger Hanuman ji chanting animation
+      triggerHanumanChanting();
     }
 
     function toggleWriting() {
@@ -330,6 +408,17 @@
         toggleButton.textContent = "Start Writing";
         toggleButton.classList.add('disabled');
       }
+    }
+
+    function switchBackground() {
+      currentBackgroundIndex = (currentBackgroundIndex + 1) % backgroundImages.length;
+      const newImage = backgroundImages[currentBackgroundIndex];
+      
+      // Update the background image in the CSS
+      document.body.style.backgroundImage = `url('${newImage}'), linear-gradient(90deg, transparent 0 64px, var(--margin) 64px 66px, transparent 66px), repeating-linear-gradient(to bottom, var(--paper), var(--paper) calc(var(--font-size) * var(--line-height) - 2px), var(--rule) 0, var(--rule) calc(var(--font-size) * var(--line-height)))`;
+      
+      // Update button text to show current image number
+      // backgroundSwitcher.textContent = `🖼️ ${currentBackgroundIndex + 1}`;
     }
 
     function removeLast(){
@@ -349,6 +438,9 @@
     
     // Toggle button event listener
     toggleButton.addEventListener("click", toggleWriting);
+    
+    // Background switcher event listener
+    backgroundSwitcher.addEventListener("click", switchBackground);
 
     document.addEventListener("keydown", (e) => {
       if (e.code === "Space") {
