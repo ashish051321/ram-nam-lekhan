@@ -184,10 +184,43 @@
       transform: scale(1.3);
       background: rgba(234, 255, 234, 0.6);
     }
+
+    /* Toggle Button */
+    #toggleButton {
+      position: fixed;
+      bottom: 190px;
+      left: 16px;
+      background: rgba(255, 255, 255, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: 12px;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #333;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      z-index: 999;
+      transition: transform 0.2s ease, background 0.2s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    #toggleButton:hover {
+      transform: scale(1.05);
+      background: rgba(255, 255, 255, 0.35);
+    }
+    #toggleButton:active {
+      transform: scale(0.95);
+      background: rgba(251, 255, 200, 0.4);
+    }
+    #toggleButton.disabled {
+      background: rgba(213, 255, 200, 0.4);
+      color: #666;
+    }
   </style>
 </head>
 <body>
   <div id="counter">0 ✍️</div>
+  <button id="toggleButton">Start Writing</button>
 
   <div class="wrap">
     <header>
@@ -201,15 +234,17 @@
       <span class="line" id="line"></span>
     </main>
 
-    <div class="hint">Backspace to remove last word.</div>
+    <!-- <div class="hint">Backspace to remove last word.</div> -->
   </div>
 
   <script>
     const pageEl = document.getElementById('page');
     const lineEl = document.getElementById('line');
     const counterEl = document.getElementById('counter');
+    const toggleButton = document.getElementById('toggleButton');
     pageEl.focus({ preventScroll: true });
     let count = 0;
+    let isWritingEnabled = false;
 
     function createAnimatedRam() {
       const ns = "http://www.w3.org/2000/svg";
@@ -272,20 +307,29 @@
     }
 
     function writeRam(){
-      if (count > 0) addGap();
-      const svgWord = createAnimatedRam();
-      lineEl.appendChild(svgWord);
-      count++;
-      updateCounter();
+      if (!isWritingEnabled) return;
       
-      // Only auto-scroll if user is near the bottom of the page
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight;
-      const isNearBottom = (scrollTop + windowHeight) >= (documentHeight - 100);
+      // First scroll to bottom of screen
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
       
-      if (isNearBottom) {
-        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+      // Wait a moment for scroll to complete, then write Ram
+      setTimeout(() => {
+        if (count > 0) addGap();
+        const svgWord = createAnimatedRam();
+        lineEl.appendChild(svgWord);
+        count++;
+        updateCounter();
+      }, 100);
+    }
+
+    function toggleWriting() {
+      isWritingEnabled = !isWritingEnabled;
+      if (isWritingEnabled) {
+        toggleButton.textContent = "Stop Writing";
+        toggleButton.classList.remove('disabled');
+      } else {
+        toggleButton.textContent = "Start Writing";
+        toggleButton.classList.add('disabled');
       }
     }
 
@@ -300,6 +344,12 @@
       count = Math.max(0, count - 1);
       updateCounter();
     }
+
+    // Initialize toggle button state
+    toggleButton.classList.add('disabled');
+    
+    // Toggle button event listener
+    toggleButton.addEventListener("click", toggleWriting);
 
     document.addEventListener("keydown", (e) => {
       if (e.code === "Space") {
