@@ -346,10 +346,16 @@
     // Background images array
     const backgroundImages = [
       './lord-ram-background.jpg',
-      'https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=1920&h=1080&fit=crop&crop=center',
-      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
-      'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1920&h=1080&fit=crop&crop=center',
-      'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&h=1080&fit=crop&crop=center'
+      './Shree Ram Wallpaper Enwallpaper.jpg',
+      './raji_hanumanji.jpg',
+      './ram_sitaji.jpg',
+      './ramji birth.jpg',
+      './ramji kevat.jpg',
+      './ramji shabri.jpg',
+      './ramji_ayodhya.jpg',
+      './ramji_combat.jpg',
+      './ramji_setu.jpg',
+      './ramji2.jpg'
     ];
     let currentBackgroundIndex = 0;
 
@@ -488,8 +494,12 @@
       currentBackgroundIndex = (currentBackgroundIndex + 1) % backgroundImages.length;
       const newImage = backgroundImages[currentBackgroundIndex];
       
-      // Update the background image in the CSS
+      // Update the background image with proper sizing
       document.body.style.backgroundImage = `url('${newImage}'), linear-gradient(90deg, transparent 0 64px, var(--margin) 64px 66px, transparent 66px), repeating-linear-gradient(to bottom, var(--paper), var(--paper) calc(var(--font-size) * var(--line-height) - 2px), var(--rule) 0, var(--rule) calc(var(--font-size) * var(--line-height)))`;
+      document.body.style.backgroundSize = 'cover, 100% 100%, 100% 100%';
+      document.body.style.backgroundPosition = 'center center, 0 0, 0 0';
+      document.body.style.backgroundRepeat = 'no-repeat, no-repeat, repeat';
+      document.body.style.backgroundAttachment = 'fixed, scroll, scroll';
       
       // Update button text to show current image number
       // backgroundSwitcher.textContent = `🖼️ ${currentBackgroundIndex + 1}`;
