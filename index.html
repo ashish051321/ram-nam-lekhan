@@ -271,12 +271,45 @@
     #hanuman.chanting {
       animation: chant 0.8s ease-in-out;
     }
+
+    /* Sound Toggle Button */
+    #soundToggle {
+      position: fixed;
+      top: 75px;
+      left: 16px;
+      background: rgba(255, 255, 255, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #333;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      z-index: 999;
+      transition: transform 0.2s ease, background 0.2s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    #soundToggle:hover {
+      transform: scale(1.05);
+      background: rgba(255, 255, 255, 0.35);
+    }
+    #soundToggle:active {
+      transform: scale(0.95);
+      background: rgba(251, 255, 200, 0.4);
+    }
+    #soundToggle.disabled {
+      background: rgba(255, 200, 200, 0.4);
+      color: #666;
+    }
   </style>
 </head>
 <body>
   <div id="counter">0 ✍️</div>
   <button id="toggleButton">Start Writing</button>
   <button id="backgroundSwitcher">🖼️</button>
+  <button id="soundToggle">🔊</button>
   <div id="hanuman"></div>
 
   <div class="wrap">
@@ -300,10 +333,15 @@
     const counterEl = document.getElementById('counter');
     const toggleButton = document.getElementById('toggleButton');
     const backgroundSwitcher = document.getElementById('backgroundSwitcher');
+    const soundToggle = document.getElementById('soundToggle');
     const hanumanEl = document.getElementById('hanuman');
     pageEl.focus({ preventScroll: true });
     let count = 0;
     let isWritingEnabled = false;
+    let isSoundEnabled = true;
+    
+    // Audio element for playing the chant file
+    let audioElement;
     
     // Background images array
     const backgroundImages = [
@@ -382,6 +420,39 @@
       }, 800);
     }
 
+    function initAudio() {
+      if (!audioElement) {
+        audioElement = new Audio('./chant1_radio.mp3');
+        audioElement.volume = 0.3; // Set volume to 30%
+        audioElement.preload = 'auto';
+      }
+    }
+
+    function playRamSound() {
+      if (!isSoundEnabled) return;
+      
+      initAudio();
+      
+      // Reset audio to beginning and play
+      audioElement.currentTime = 0;
+      audioElement.play().catch(e => {
+        console.log('Audio play failed:', e);
+      });
+    }
+
+    function toggleSound() {
+      isSoundEnabled = !isSoundEnabled;
+      if (isSoundEnabled) {
+        soundToggle.textContent = "🔊";
+        soundToggle.classList.remove('disabled');
+        // Play a test sound
+        playRamSound();
+      } else {
+        soundToggle.textContent = "🔇";
+        soundToggle.classList.add('disabled');
+      }
+    }
+
     function writeRam(){
       if (!isWritingEnabled) return;
       
@@ -397,6 +468,9 @@
       
       // Trigger Hanuman ji chanting animation
       triggerHanumanChanting();
+      
+      // Play Ram sound
+      playRamSound();
     }
 
     function toggleWriting() {
@@ -436,11 +510,17 @@
     // Initialize toggle button state
     toggleButton.classList.add('disabled');
     
+    // Initialize sound toggle button state
+    soundToggle.classList.add('disabled');
+    
     // Toggle button event listener
     toggleButton.addEventListener("click", toggleWriting);
     
     // Background switcher event listener
     backgroundSwitcher.addEventListener("click", switchBackground);
+    
+    // Sound toggle event listener
+    soundToggle.addEventListener("click", toggleSound);
 
     document.addEventListener("keydown", (e) => {
       if (e.code === "Space") {
