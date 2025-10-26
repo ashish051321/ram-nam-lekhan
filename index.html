@@ -29,7 +29,7 @@
       height: 10000px; /* Set a large fixed height to prevent scroll jumping */
       color:var(--ink);
       background:
-        url('./lord-ram-background.jpg') center center / 60% no-repeat,
+        url('./lord-ram-background.jpg') center center / cover no-repeat fixed,
         linear-gradient(90deg, transparent 0 64px, var(--margin) 64px 66px, transparent 66px) 0 0/100% 100%,
         repeating-linear-gradient(
           to bottom,
@@ -57,7 +57,7 @@
     @media (max-width: 768px) {
       body {
         background:
-          url('./lord-ram-background.jpg') center center / 80% no-repeat,
+          url('./lord-ram-background.jpg') center center / cover no-repeat fixed,
           linear-gradient(90deg, transparent 0 64px, var(--margin) 64px 66px, transparent 66px) 0 0/100% 100%,
           repeating-linear-gradient(
             to bottom,
