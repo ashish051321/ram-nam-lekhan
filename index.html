@@ -26,6 +26,7 @@
     body{
       margin:0;
       min-height:100svh;
+      height: 10000px; /* Set a large fixed height to prevent scroll jumping */
       color:var(--ink);
       background:
         url('./lord-ram-background.jpg') center center / 60% no-repeat,
@@ -309,17 +310,15 @@
     function writeRam(){
       if (!isWritingEnabled) return;
       
-      // First scroll to bottom of screen
-      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+      // Scroll to bottom of screen
+      // window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
       
-      // Wait a moment for scroll to complete, then write Ram
-      setTimeout(() => {
-        if (count > 0) addGap();
-        const svgWord = createAnimatedRam();
-        lineEl.appendChild(svgWord);
-        count++;
-        updateCounter();
-      }, 100);
+      // Write Ram
+      if (count > 0) addGap();
+      const svgWord = createAnimatedRam();
+      lineEl.appendChild(svgWord);
+      count++;
+      updateCounter();
     }
 
     function toggleWriting() {
