@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>राम नाम लेखन</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --font-size: clamp(36px, 6vw, 72px);
+      --line-height: 1.6;
+      --ink: #111;
+      --stroke: #111;
+      --fill: #000;
+      --paper: #fffef8;
+      --rule: #d9e6ff;
+      --margin: #ffb3b3;
+      --gap: 0.5em;
+      --stroke-width: 2.2px;
+      --draw-ms: 1200;
+      --ink-fade-ms: 250;
+    }
+
+    body{
+      margin:0;
+      min-height:100svh;
+      color:var(--ink);
+      background:
+        url('./lord-ram-background.jpg') center center / 60% no-repeat,
+        linear-gradient(90deg, transparent 0 64px, var(--margin) 64px 66px, transparent 66px) 0 0/100% 100%,
+        repeating-linear-gradient(
+          to bottom,
+          var(--paper),
+          var(--paper) calc(var(--font-size) * var(--line-height) - 2px),
+          var(--rule) 0,
+          var(--rule) calc(var(--font-size) * var(--line-height))
+        );
+      font-family: "Kalam", system-ui, -apple-system, "Noto Sans Devanagari", "Noto Sans", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 254, 248, 0.65);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        background:
+          url('./lord-ram-background.jpg') center center / 80% no-repeat,
+          linear-gradient(90deg, transparent 0 64px, var(--margin) 64px 66px, transparent 66px) 0 0/100% 100%,
+          repeating-linear-gradient(
+            to bottom,
+            var(--paper),
+            var(--paper) calc(var(--font-size) * var(--line-height) - 2px),
+            var(--rule) 0,
+            var(--rule) calc(var(--font-size) * var(--line-height))
+          );
+      }
+      header {
+        font-size: 12px;
+        padding: 10px 16px;
+        bottom: 12px;
+      }
+    }
+
+    .wrap{
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 24px 16px 100px;
+      position: relative;
+      z-index: 1;
+    }
+
+    header{
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(10px);
+      padding: 12px 20px;
+      font-size: 13px;
+      line-height: 1.4;
+      color: #555;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      user-select: none;
+      border-radius: 30px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      max-width: calc(100% - 32px);
+      z-index: 998;
+    }
+    header .dot{
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 4px #22c55e22;
+      flex: none;
+    }
+
+    .page{
+      font-size: var(--font-size);
+      line-height: var(--line-height);
+      padding-left: 76px;
+      cursor: crosshair;
+      word-wrap: break-word;
+    }
+
+    .line{
+      display: inline;
+    }
+
+    .gap{
+      display: inline-block;
+      width: .35em;
+    }
+
+    svg.word{
+      display: inline-block;
+      height: 1em;
+      vertical-align: -0.12em;
+      overflow: visible;
+    }
+
+    .stroke{
+      fill: none;
+      stroke: var(--stroke);
+      stroke-width: var(--stroke-width);
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 1000;
+      animation: draw var(--draw-ms) ease forwards;
+      filter: drop-shadow(0 0 0.25px rgba(0,0,0,0.15));
+    }
+    .fill{
+      fill: var(--fill);
+      opacity: 0;
+      animation: ink var(--ink-fade-ms) ease forwards;
+      animation-delay: calc(var(--draw-ms) * 1ms);
+    }
+
+    @keyframes draw{ to { stroke-dashoffset: 0; } }
+    @keyframes ink{ to { opacity: 1; } }
+
+    .hint{
+      font-size: 13px;
+      color:#666;
+      margin-top: 6px;
+      padding-left: 76px;
+      user-select: none;
+    }
+
+    * { -webkit-user-select: none; user-select: none; }
+
+    /* Floating Counter */
+    #counter {
+      position: fixed;
+      top: 12px;
+      right: 16px;
+      background: rgba(255, 255, 255, 0.85);
+      border: 2px solid #ccc;
+      border-radius: 12px;
+      padding: 6px 14px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+      backdrop-filter: blur(5px);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      z-index: 999;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    #counter.flash {
+      transform: scale(1.3);
+      background: #eaffea;
+    }
+  </style>
+</head>
+<body>
+  <div id="counter">0 ✍️</div>
+
+  <div class="wrap">
+    <header>
+      <div class="dot" aria-hidden="true"></div>
+      <div>
+        Tap / click anywhere or press <strong>Space</strong> to keep writing <strong>“राम”</strong> with tracing animation.
+      </div>
+    </header>
+
+    <main class="page" id="page" aria-label="Writing surface" role="application" tabindex="0">
+      <span class="line" id="line"></span>
+    </main>
+
+    <div class="hint">Backspace to remove last word.</div>
+  </div>
+
+  <script>
+    const pageEl = document.getElementById('page');
+    const lineEl = document.getElementById('line');
+    const counterEl = document.getElementById('counter');
+    pageEl.focus({ preventScroll: true });
+    let count = 0;
+
+    function createAnimatedRam() {
+      const ns = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(ns, "svg");
+      svg.setAttribute("class", "word");
+      const textStroke = document.createElementNS(ns, "text");
+      textStroke.setAttribute("class", "stroke");
+      textStroke.setAttribute("x", "0");
+      textStroke.setAttribute("y", "0");
+      textStroke.setAttribute("dominant-baseline", "hanging");
+      textStroke.setAttribute("font-family", "'Kalam', 'Noto Sans Devanagari', sans-serif");
+      textStroke.setAttribute("font-size", "1em");
+      textStroke.textContent = "राम";
+
+      const textFill = document.createElementNS(ns, "text");
+      textFill.setAttribute("class", "fill");
+      textFill.setAttribute("x", "0");
+      textFill.setAttribute("y", "0");
+      textFill.setAttribute("dominant-baseline", "hanging");
+      textFill.setAttribute("font-family", "'Kalam', 'Noto Sans Devanagari', sans-serif");
+      textFill.setAttribute("font-size", "1em");
+      textFill.textContent = "राम";
+
+      svg.appendChild(textStroke);
+      svg.appendChild(textFill);
+
+      svg.style.position = "absolute";
+      svg.style.visibility = "hidden";
+      lineEl.appendChild(svg);
+      const bbox = textStroke.getBBox();
+      const pad = 2;
+      const w = Math.ceil(bbox.width + pad * 2);
+      const h = Math.ceil(bbox.height + pad * 2);
+      svg.setAttribute("viewBox", `${bbox.x - pad} ${bbox.y - pad} ${w} ${h}`);
+      svg.style.position = "";
+      svg.style.visibility = "";
+
+      const approxLen = Math.max(300, Math.round((bbox.width + bbox.height) * 6));
+      textStroke.style.strokeDasharray = approxLen;
+      textStroke.style.strokeDashoffset = approxLen;
+
+      return svg;
+    }
+
+    function addGap(){
+      const gap = document.createElement("span");
+      gap.className = "gap";
+      gap.textContent = " ";
+      lineEl.appendChild(gap);
+    }
+
+    function flashCounter(){
+      counterEl.classList.add("flash");
+      setTimeout(()=>counterEl.classList.remove("flash"), 200);
+    }
+
+    function updateCounter(){
+      counterEl.textContent = `${count} ✍️`;
+      flashCounter();
+    }
+
+    function writeRam(){
+      if (count > 0) addGap();
+      const svgWord = createAnimatedRam();
+      lineEl.appendChild(svgWord);
+      count++;
+      updateCounter();
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    }
+
+    function removeLast(){
+      if (!lineEl.lastChild) return;
+      if (lineEl.lastChild.classList?.contains("gap")){
+        lineEl.removeChild(lineEl.lastChild);
+        if (lineEl.lastChild) lineEl.removeChild(lineEl.lastChild);
+      } else {
+        lineEl.removeChild(lineEl.lastChild);
+      }
+      count = Math.max(0, count - 1);
+      updateCounter();
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space") {
+        e.preventDefault();
+        writeRam();
+      } else if (e.key === "Backspace") {
+        e.preventDefault();
+        removeLast();
+      }
+    });
+
+    document.addEventListener("pointerdown", (e) => {
+      const tag = (e.target.tagName || "").toLowerCase();
+      if (["a","button","input","textarea","select","label"].includes(tag)) return;
+      writeRam();
+    }, { passive: true });
+  </script>
+</body>
+</html>
