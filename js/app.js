@@ -1,4 +1,4 @@
-import { startSession, incrementCount, endSession } from './history.js';
+import { startSession, incrementCount, endSession } from './history.js?v=20251101';
 
 const pageEl = document.getElementById('page');
 const lineEl = document.getElementById('line');

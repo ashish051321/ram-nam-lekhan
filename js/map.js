@@ -137,6 +137,13 @@ export function bindMapUI() {
     applyTransform(canvas);
     setMapBackground(canvas);
     renderMarkers(canvas);
+    // Center initial view on India (approx lat 22, lng 78)
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    const india = project(22, 78, width, height);
+    translateX = (width / 2) - india.x;
+    translateY = (height / 2) - india.y;
+    applyTransform(canvas);
   }
   function close() { modal.classList.remove('show'); }
 
