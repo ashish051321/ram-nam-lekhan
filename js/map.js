@@ -65,6 +65,9 @@ function renderMarkers(canvas) {
   canvas.innerHTML = '';
   const width = canvas.clientWidth;
   const height = canvas.clientHeight;
+  function hideAllLabels() {
+    canvas.querySelectorAll('.map-label').forEach(el => { el.style.display = 'none'; });
+  }
   mockLocations.forEach(loc => {
     const { x, y } = project(loc.lat, loc.lng, width, height);
     const marker = document.createElement('div');
@@ -74,8 +77,19 @@ function renderMarkers(canvas) {
     const label = document.createElement('div');
     label.className = 'map-label';
     label.textContent = `${loc.name} • ${loc.count}`;
+    label.style.display = 'none';
     marker.appendChild(label);
+    marker.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isHidden = label.style.display === 'none';
+      hideAllLabels();
+      label.style.display = isHidden ? 'block' : 'none';
+    });
     canvas.appendChild(marker);
+  });
+  // clicking empty canvas hides labels
+  canvas.addEventListener('click', () => {
+    canvas.querySelectorAll('.map-label').forEach(el => { el.style.display = 'none'; });
   });
 }
 
