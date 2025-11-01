@@ -319,6 +319,49 @@ svg.word{
   transform: scale(0.95);
 }
 
+/* Map Button */
+#mapButton {
+  position: fixed;
+  bottom: 44px;
+  right: 72px;
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  z-index: 1999;
+  transition: transform 0.2s ease, background 0.2s ease;
+  cursor: pointer;
+  user-select: none;
+  font-size: 20px;
+}
+#mapButton:hover { transform: scale(1.05); background: rgba(255, 255, 255, 0.95); }
+#mapButton:active { transform: scale(0.95); }
+
+/* Map Modal */
+.map-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.25); display: none; align-items: center; justify-content: center; z-index: 3000; }
+.map-modal.show { display: flex; }
+.map-dialog { width: min(900px, calc(100% - 32px)); height: min(70vh, 640px); background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; box-shadow: 0 12px 30px rgba(0,0,0,0.2); display: flex; flex-direction: column; }
+.map-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid rgba(0,0,0,0.06); }
+.map-title { font-weight: 700; font-size: 16px; color: #333; }
+.map-legend { display: flex; align-items: center; gap: 6px; color: #444; font-size: 12px; }
+.map-swatch { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 8px #22c55e88; display: inline-block; }
+.map-tools { display: flex; gap: 6px; align-items: center; }
+.map-zoom { border: 1px solid #d1d5db; background: #fff; border-radius: 8px; padding: 4px 10px; cursor: pointer; }
+.map-close { border: none; background: transparent; font-size: 16px; cursor: pointer; }
+.map-viewport { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; background: linear-gradient(180deg,#eef2ff,#ffffff); }
+.map-canvas { position: absolute; left: 50%; top: 50%; width: 1000px; height: 500px; transform: translate(-50%, -50%) scale(1); border: 1px solid #e5e7eb; border-radius: 12px; background:
+  /* base grid overlays; the map image will be injected via JS for reliability */
+  radial-gradient(circle at 50% 50%, rgba(0,0,0,0.02), transparent 60%),
+  linear-gradient(90deg, #f3f4f6 1px, transparent 1px) 0 0 / 50px 50px,
+  linear-gradient(#f3f4f6 1px, transparent 1px) 0 0 / 50px 50px;
+}
+.map-marker { position: absolute; width: 10px; height: 10px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 8px #22c55e88; transform: translate(-50%, -50%); }
+.map-marker::after { content: ""; position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; border-radius: 50%; transform: translate(-50%, -50%); border: 2px solid #22c55e; animation: blip 1.8s ease-out infinite; opacity: 0.8; }
+.map-label { position: absolute; transform: translate(-50%, -120%); background: rgba(255,255,255,0.9); border: 1px solid #e5e7eb; border-radius: 6px; padding: 2px 6px; font-size: 10px; color: #111; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+@keyframes blip { from { opacity: 0.9; width: 0; height: 0; } to { opacity: 0; width: 36px; height: 36px; } }
 /* History Button */
 #historyButton {
   position: fixed;
@@ -414,6 +457,7 @@ svg.word{
 .history-tab.active { background: #fff; border-color: #e5e7eb; border-bottom-color: #fff; }
 .tab-panel { padding: 8px 0;}
 #historyModal .tab-panel[hidden] { display: none !important; }
+#tabPanelCalendar{overflow-y: auto;}
 #tabPanelSessions{overflow-y: auto;}
 #historyList{overflow-y: auto;}
 /* #tabPanelSessions { display: flex; flex-direction: column; }

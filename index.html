@@ -27,6 +27,7 @@
   <button id="backgroundSwitcher">🎨</button>
   <button id="soundToggle">🔊</button>
   <button id="whatsappShare"></button>
+  <button id="mapButton" title="Live Map">🗺️</button>
   <button id="historyButton" title="History">🕘</button>
   <div id="hanuman"></div>
 
@@ -47,6 +48,24 @@
 
   <!-- Removed inline script: migrated to JS modules in js/ -->
   <script type="module" src="./js/index.js"></script>
+  
+  <!-- Map Modal -->
+  <div id="mapModal" class="map-modal">
+    <div class="map-dialog">
+      <div class="map-header">
+        <div class="map-title">Live Map (mock)</div>
+        <div class="map-legend"><span class="map-swatch"></span>Active writers</div>
+        <div class="map-tools">
+          <button id="mapZoomOut" class="map-zoom">−</button>
+          <button id="mapZoomIn" class="map-zoom">+</button>
+          <button id="mapClose" class="map-close" aria-label="Close">✖</button>
+        </div>
+      </div>
+      <div class="map-viewport" id="mapViewport">
+        <div class="map-canvas" id="mapCanvas"></div>
+      </div>
+    </div>
+  </div>
   
   <!-- History Modal -->
   <div id="historyModal" class="history-modal">

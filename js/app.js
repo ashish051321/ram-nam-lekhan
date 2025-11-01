@@ -194,8 +194,9 @@ export function initApp() {
   whatsappShare.addEventListener("click", shareToWhatsApp);
 
   document.addEventListener("keydown", (e) => {
-    const modal = document.getElementById('historyModal');
-    if (modal && modal.classList.contains('show')) return; // ignore keys when modal open
+    const historyModal = document.getElementById('historyModal');
+    const mapModal = document.getElementById('mapModal');
+    if ((historyModal && historyModal.classList.contains('show')) || (mapModal && mapModal.classList.contains('show'))) return; // ignore keys when any modal open
     if (e.code === "Space") {
       e.preventDefault();
       writeRam();
@@ -206,9 +207,13 @@ export function initApp() {
   });
 
   document.addEventListener("pointerdown", (e) => {
-    const modal = document.getElementById('historyModal');
-    if (modal && modal.classList.contains('show')) {
-      if (e.target && modal.contains(e.target)) return; // ignore clicks inside/open modal
+    const historyModal = document.getElementById('historyModal');
+    const mapModal = document.getElementById('mapModal');
+    if (historyModal && historyModal.classList.contains('show')) {
+      if (e.target && historyModal.contains(e.target)) return;
+    }
+    if (mapModal && mapModal.classList.contains('show')) {
+      if (e.target && mapModal.contains(e.target)) return;
     }
     const tag = (e.target.tagName || "").toLowerCase();
     if (["a","button","input","textarea","select","label"].includes(tag)) return;
