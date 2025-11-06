@@ -78,8 +78,11 @@ function applyTransform(canvas) {
 
 function renderMarkers(canvas, locations, currentUserId, selectedUserId = null) {
   canvas.innerHTML = '';
-  const width = canvas.clientWidth;
-  const height = canvas.clientHeight;
+  // Use the original canvas dimensions (not transformed) for accurate projection
+  // The canvas has a fixed base size that we should use for projection
+  const width = canvas.offsetWidth || parseInt(getComputedStyle(canvas).width) || 1000;
+  const height = canvas.offsetHeight || parseInt(getComputedStyle(canvas).height) || 500;
+  
   function hideAllLabels() {
     canvas.querySelectorAll('.map-label').forEach(el => { el.style.display = 'none'; });
   }
@@ -252,15 +255,17 @@ export function bindMapUI() {
     const user = currentLocations.find(loc => loc.userId === userId);
     if (!user) return;
     
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
+    // Use the original canvas dimensions (not transformed) for accurate projection
+    const width = canvas.offsetWidth || parseInt(getComputedStyle(canvas).width) || 1000;
+    const height = canvas.offsetHeight || parseInt(getComputedStyle(canvas).height) || 500;
     const center = project(user.latitude, user.longitude, width, height);
     translateX = (width / 2) - center.x;
     translateY = (height / 2) - center.y;
-    applyTransform(canvas);
     
-    // Zoom in a bit to highlight the selected user
-    currentScale = Math.min(3, currentScale * 1.5);
+    // Set a fixed zoom level to highlight the selected user (only if not already zoomed)
+    if (currentScale < 2) {
+      currentScale = 2;
+    }
     applyTransform(canvas);
   }
 
@@ -302,8 +307,10 @@ export function bindMapUI() {
     renderMarkers(canvas, currentLocations, currentUserId, selectedUserId);
     
     // Center view on first user or India if no users
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
+    // Use the original canvas dimensions (not transformed) for accurate projection
+    const width = canvas.offsetWidth || parseInt(getComputedStyle(canvas).width) || 1000;
+    const height = canvas.offsetHeight || parseInt(getComputedStyle(canvas).height) || 500;
+    
     let centerLat = 22;
     let centerLng = 78;
     
@@ -332,7 +339,10 @@ export function bindMapUI() {
     selectedUserId = null;
     applyTransform(canvas);
     setMapBackground(canvas);
-    loadAndRenderData();
+    // Small delay to ensure canvas dimensions are calculated after modal is shown
+    setTimeout(() => {
+      loadAndRenderData();
+    }, 50);
   }
   function close() { 
     modal.classList.remove('show');
@@ -358,7 +368,22 @@ export function bindMapUI() {
   // re-render markers on resize to keep projection correct
   window.addEventListener('resize', () => { 
     if (modal.classList.contains('show')) {
-      renderMarkers(canvas, currentLocations, currentUserId, selectedUserId);
+      // Small delay to ensure dimensions are recalculated
+      setTimeout(() => {
+        renderMarkers(canvas, currentLocations, currentUserId, selectedUserId);
+        // Re-center if needed
+        if (currentLocations.length > 0) {
+          const width = canvas.offsetWidth || parseInt(getComputedStyle(canvas).width) || 1000;
+          const height = canvas.offsetHeight || parseInt(getComputedStyle(canvas).height) || 500;
+          const currentUserLoc = currentLocations.find(loc => loc.userId === currentUserId);
+          if (currentUserLoc) {
+            const center = project(currentUserLoc.latitude, currentUserLoc.longitude, width, height);
+            translateX = (width / 2) - center.x;
+            translateY = (height / 2) - center.y;
+            applyTransform(canvas);
+          }
+        }
+      }, 100);
     }
   });
 }
