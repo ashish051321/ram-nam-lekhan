@@ -16,7 +16,6 @@ let audioElement;
 
 const backgroundImages = [
   './ramji shabri.jpg',
-  './lord-ram-background.jpg',
   './Shree Ram Wallpaper Enwallpaper.jpg',
   './raji_hanumanji.jpg',
   './ram_sitaji.jpg',
@@ -25,7 +24,8 @@ const backgroundImages = [
   './ramji_ayodhya.jpg',
   './ramji_combat.jpg',
   './ramji_setu.jpg',
-  './ramji2.jpg'
+  './ramji2.jpg',
+  './lord-ram-background.jpg'
 ];
 let currentBackgroundIndex = 0;
 
