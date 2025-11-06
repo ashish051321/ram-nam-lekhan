@@ -1,27 +1,42 @@
-const mockLocations = [
-  // India (multiple cities)
-  { name: 'Delhi, India', lat: 28.6139, lng: 77.2090, count: 320 },
-  { name: 'Gurugram, India', lat: 28.4595, lng: 77.0266, count: 140 },
-  { name: 'Noida, India', lat: 28.5355, lng: 77.3910, count: 95 },
-  { name: 'Chandigarh, India', lat: 30.7333, lng: 76.7794, count: 72 },
-  { name: 'Jaipur, India', lat: 26.9124, lng: 75.7873, count: 88 },
-  { name: 'Ahmedabad, India', lat: 23.0225, lng: 72.5714, count: 110 },
-  { name: 'Mumbai, India', lat: 19.0760, lng: 72.8777, count: 260 },
-  { name: 'Pune, India', lat: 18.5204, lng: 73.8567, count: 128 },
-  { name: 'Bengaluru, India', lat: 12.9716, lng: 77.5946, count: 212 },
-  { name: 'Hyderabad, India', lat: 17.3850, lng: 78.4867, count: 160 },
-  { name: 'Chennai, India', lat: 13.0827, lng: 80.2707, count: 102 },
-  { name: 'Kolkata, India', lat: 22.5726, lng: 88.3639, count: 97 },
-  { name: 'Lucknow, India', lat: 26.8467, lng: 80.9462, count: 66 },
-  { name: 'Indore, India', lat: 22.7196, lng: 75.8577, count: 54 },
-  { name: 'Nagpur, India', lat: 21.1458, lng: 79.0882, count: 44 },
-  { name: 'Surat, India', lat: 21.1702, lng: 72.8311, count: 38 },
-  { name: 'Patna, India', lat: 25.5941, lng: 85.1376, count: 28 },
-  // Global examples
-  { name: 'Washington, US', lat: 38.9072, lng: -77.0369, count: 64 },
-  { name: 'London, UK', lat: 51.5074, lng: -0.1278, count: 45 },
-  { name: 'Sydney, AU', lat: -33.8688, lng: 151.2093, count: 20 },
-];
+// Parse API configuration
+const PARSE_API_URL = 'https://parseapi.back4app.com/functions/getAllUsers';
+const PARSE_APP_ID = 'yKujveqA2lJWMJ0mJhWGYudoMncTnfE7a5HKoaNZ';
+const PARSE_REST_API_KEY = 'IMAEUdc6b4zfa4iVHMKvzzG5XjouNqtnLf4cqynn';
+
+// Get current user ID
+function getUserId() {
+  const STORAGE_KEY = 'ram_user_id';
+  let userId = localStorage.getItem(STORAGE_KEY);
+  if (!userId) {
+    userId = `user_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    localStorage.setItem(STORAGE_KEY, userId);
+  }
+  return userId;
+}
+
+// Fetch all users from Parse API
+async function fetchAllUsers() {
+  try {
+    const response = await fetch(PARSE_API_URL, {
+      method: 'POST',
+      headers: {
+        'X-Parse-Application-Id': PARSE_APP_ID,
+        'X-Parse-REST-API-Key': PARSE_REST_API_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data.result || [];
+  } catch (error) {
+    console.error('Failed to fetch users from API:', error);
+    return [];
+  }
+}
 
 // equirectangular projection to canvas coords
 function project(lat, lng, width, height) {
@@ -61,22 +76,34 @@ function applyTransform(canvas) {
   canvas.style.transform = `translate(calc(-50% + ${translateX}px), calc(-50% + ${translateY}px)) scale(${currentScale})`;
 }
 
-function renderMarkers(canvas) {
+function renderMarkers(canvas, locations, currentUserId) {
   canvas.innerHTML = '';
   const width = canvas.clientWidth;
   const height = canvas.clientHeight;
   function hideAllLabels() {
     canvas.querySelectorAll('.map-label').forEach(el => { el.style.display = 'none'; });
   }
-  mockLocations.forEach(loc => {
-    const { x, y } = project(loc.lat, loc.lng, width, height);
+  
+  if (!locations || locations.length === 0) {
+    // Show loading or empty state
+    const emptyMsg = document.createElement('div');
+    emptyMsg.className = 'map-empty';
+    emptyMsg.textContent = 'No active users found';
+    emptyMsg.style.cssText = 'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #666; font-size: 14px;';
+    canvas.appendChild(emptyMsg);
+    return;
+  }
+  
+  locations.forEach(loc => {
+    const { x, y } = project(loc.latitude, loc.longitude, width, height);
     const marker = document.createElement('div');
-    marker.className = 'map-marker';
+    const isCurrentUser = loc.userId === currentUserId;
+    marker.className = isCurrentUser ? 'map-marker map-marker-current' : 'map-marker';
     marker.style.left = `${x}px`;
     marker.style.top = `${y}px`;
     const label = document.createElement('div');
     label.className = 'map-label';
-    label.textContent = `${loc.name} • ${loc.count}`;
+    label.textContent = `${loc.place} • ${loc.ramCount} राम`;
     label.style.display = 'none';
     marker.appendChild(label);
     marker.addEventListener('click', (e) => {
@@ -131,19 +158,50 @@ export function bindMapUI() {
   const zoomOut = document.getElementById('mapZoomOut');
   if (!mapBtn || !modal || !viewport || !canvas) return;
 
+  let currentLocations = [];
+  const currentUserId = getUserId();
+
+  async function loadAndRenderMarkers() {
+    // Show loading state
+    canvas.innerHTML = '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #666; font-size: 14px;">Loading users...</div>';
+    
+    // Fetch users from API
+    const users = await fetchAllUsers();
+    currentLocations = users;
+    
+    // Render markers with real data
+    renderMarkers(canvas, currentLocations, currentUserId);
+    
+    // Center view on first user or India if no users
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    let centerLat = 22;
+    let centerLng = 78;
+    
+    if (currentLocations.length > 0) {
+      // Center on current user if available, otherwise first user
+      const currentUserLoc = currentLocations.find(loc => loc.userId === currentUserId);
+      if (currentUserLoc) {
+        centerLat = currentUserLoc.latitude;
+        centerLng = currentUserLoc.longitude;
+      } else {
+        centerLat = currentLocations[0].latitude;
+        centerLng = currentLocations[0].longitude;
+      }
+    }
+    
+    const center = project(centerLat, centerLng, width, height);
+    translateX = (width / 2) - center.x;
+    translateY = (height / 2) - center.y;
+    applyTransform(canvas);
+  }
+
   function open() {
     modal.classList.add('show');
     currentScale = 1; translateX = 0; translateY = 0;
     applyTransform(canvas);
     setMapBackground(canvas);
-    renderMarkers(canvas);
-    // Center initial view on India (approx lat 22, lng 78)
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
-    const india = project(22, 78, width, height);
-    translateX = (width / 2) - india.x;
-    translateY = (height / 2) - india.y;
-    applyTransform(canvas);
+    loadAndRenderMarkers();
   }
   function close() { modal.classList.remove('show'); }
 
@@ -156,7 +214,11 @@ export function bindMapUI() {
   if (zoomOut) zoomOut.addEventListener('click', () => { currentScale = Math.max(0.6, currentScale * 0.8); applyTransform(canvas); });
 
   // re-render markers on resize to keep projection correct
-  window.addEventListener('resize', () => { if (modal.classList.contains('show')) renderMarkers(canvas); });
+  window.addEventListener('resize', () => { 
+    if (modal.classList.contains('show')) {
+      renderMarkers(canvas, currentLocations, currentUserId);
+    }
+  });
 }
 
 
