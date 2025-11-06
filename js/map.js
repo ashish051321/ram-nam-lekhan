@@ -76,7 +76,7 @@ function applyTransform(canvas) {
   canvas.style.transform = `translate(calc(-50% + ${translateX}px), calc(-50% + ${translateY}px)) scale(${currentScale})`;
 }
 
-function renderMarkers(canvas, locations, currentUserId) {
+function renderMarkers(canvas, locations, currentUserId, selectedUserId = null) {
   canvas.innerHTML = '';
   const width = canvas.clientWidth;
   const height = canvas.clientHeight;
@@ -88,7 +88,7 @@ function renderMarkers(canvas, locations, currentUserId) {
     // Show loading or empty state
     const emptyMsg = document.createElement('div');
     emptyMsg.className = 'map-empty';
-    emptyMsg.textContent = 'No active users found';
+    emptyMsg.textContent = 'No active writers found';
     emptyMsg.style.cssText = 'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #666; font-size: 14px;';
     canvas.appendChild(emptyMsg);
     return;
@@ -98,7 +98,14 @@ function renderMarkers(canvas, locations, currentUserId) {
     const { x, y } = project(loc.latitude, loc.longitude, width, height);
     const marker = document.createElement('div');
     const isCurrentUser = loc.userId === currentUserId;
-    marker.className = isCurrentUser ? 'map-marker map-marker-current' : 'map-marker';
+    const isSelected = loc.userId === selectedUserId;
+    
+    let markerClass = 'map-marker';
+    if (isCurrentUser) markerClass += ' map-marker-current';
+    if (isSelected) markerClass += ' map-marker-selected';
+    
+    marker.className = markerClass;
+    marker.dataset.userId = loc.userId;
     marker.style.left = `${x}px`;
     marker.style.top = `${y}px`;
     const label = document.createElement('div');
@@ -117,6 +124,71 @@ function renderMarkers(canvas, locations, currentUserId) {
   // clicking empty canvas hides labels
   canvas.addEventListener('click', () => {
     canvas.querySelectorAll('.map-label').forEach(el => { el.style.display = 'none'; });
+  });
+}
+
+function formatTime(isoString) {
+  try {
+    const date = new Date(isoString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays}d ago`;
+  } catch (_e) {
+    return '';
+  }
+}
+
+function renderUserList(listContainer, locations, currentUserId, onUserClick) {
+  if (!listContainer) return;
+  
+  if (!locations || locations.length === 0) {
+    listContainer.innerHTML = '<div class="map-list-empty">No active writers found</div>';
+    return;
+  }
+  
+  // Sort by ramCount descending, then by updatedAt
+  const sorted = [...locations].sort((a, b) => {
+    if (b.ramCount !== a.ramCount) return b.ramCount - a.ramCount;
+    return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0);
+  });
+  
+  listContainer.innerHTML = '';
+  sorted.forEach(loc => {
+    const item = document.createElement('div');
+    const isCurrentUser = loc.userId === currentUserId;
+    item.className = 'map-list-item';
+    if (isCurrentUser) {
+      item.classList.add('map-list-item-current');
+    }
+    item.dataset.userId = loc.userId;
+    
+    item.innerHTML = `
+      <div class="map-list-item-name">${isCurrentUser ? '👤 ' : ''}${loc.place || 'Unknown'}</div>
+      <div class="map-list-item-details">
+        <span class="map-list-item-count">${loc.ramCount} राम</span>
+        <span class="map-list-item-time">${formatTime(loc.updatedAt)}</span>
+      </div>
+    `;
+    
+    item.addEventListener('click', () => {
+      // Remove selected class from all items
+      listContainer.querySelectorAll('.map-list-item').forEach(el => {
+        el.classList.remove('selected');
+      });
+      // Add selected class to clicked item
+      item.classList.add('selected');
+      // Call the callback to highlight on map
+      if (onUserClick) onUserClick(loc.userId);
+    });
+    
+    listContainer.appendChild(item);
   });
 }
 
@@ -156,21 +228,78 @@ export function bindMapUI() {
   const canvas = document.getElementById('mapCanvas');
   const zoomIn = document.getElementById('mapZoomIn');
   const zoomOut = document.getElementById('mapZoomOut');
-  if (!mapBtn || !modal || !viewport || !canvas) return;
+  const listContainer = document.getElementById('mapListItems');
+  const listHeader = document.querySelector('.map-list-header');
+  
+  // Debug: log which elements are missing
+  if (!mapBtn) console.error('mapButton not found');
+  if (!modal) console.error('mapModal not found');
+  if (!viewport) console.error('mapViewport not found');
+  if (!canvas) console.error('mapCanvas not found');
+  if (!listContainer) console.error('mapListItems not found');
+  
+  // Only require essential elements - make listContainer optional for now
+  if (!mapBtn || !modal || !viewport || !canvas) {
+    console.error('Map UI: Required elements missing, cannot initialize');
+    return;
+  }
 
   let currentLocations = [];
+  let selectedUserId = null;
   const currentUserId = getUserId();
 
-  async function loadAndRenderMarkers() {
+  function centerMapOnUser(userId) {
+    const user = currentLocations.find(loc => loc.userId === userId);
+    if (!user) return;
+    
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    const center = project(user.latitude, user.longitude, width, height);
+    translateX = (width / 2) - center.x;
+    translateY = (height / 2) - center.y;
+    applyTransform(canvas);
+    
+    // Zoom in a bit to highlight the selected user
+    currentScale = Math.min(3, currentScale * 1.5);
+    applyTransform(canvas);
+  }
+
+  function highlightUserOnMap(userId) {
+    selectedUserId = userId;
+    renderMarkers(canvas, currentLocations, currentUserId, selectedUserId);
+    centerMapOnUser(userId);
+  }
+
+  function updateListHeader(count) {
+    if (listHeader) {
+      listHeader.textContent = `Active Writers (${count})`;
+    }
+  }
+
+  async function loadAndRenderData() {
     // Show loading state
+    if (listContainer) {
+      listContainer.innerHTML = '<div class="map-list-loading">Loading users...</div>';
+    }
+    if (listHeader) {
+      listHeader.textContent = 'Active Writers...';
+    }
     canvas.innerHTML = '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #666; font-size: 14px;">Loading users...</div>';
     
     // Fetch users from API
     const users = await fetchAllUsers();
     currentLocations = users;
     
+    // Update header with count
+    updateListHeader(currentLocations.length);
+    
+    // Render user list (only if container exists)
+    if (listContainer) {
+      renderUserList(listContainer, currentLocations, currentUserId, highlightUserOnMap);
+    }
+    
     // Render markers with real data
-    renderMarkers(canvas, currentLocations, currentUserId);
+    renderMarkers(canvas, currentLocations, currentUserId, selectedUserId);
     
     // Center view on first user or India if no users
     const width = canvas.clientWidth;
@@ -197,17 +326,30 @@ export function bindMapUI() {
   }
 
   function open() {
+    console.log('Opening map modal...');
     modal.classList.add('show');
     currentScale = 1; translateX = 0; translateY = 0;
+    selectedUserId = null;
     applyTransform(canvas);
     setMapBackground(canvas);
-    loadAndRenderMarkers();
+    loadAndRenderData();
   }
-  function close() { modal.classList.remove('show'); }
+  function close() { 
+    modal.classList.remove('show');
+    selectedUserId = null;
+  }
 
-  mapBtn.addEventListener('click', open);
+  console.log('Attaching map button click handler...', mapBtn);
+  mapBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    open();
+  });
   if (closeBtn) closeBtn.addEventListener('click', close);
-  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+  modal.addEventListener('click', (e) => { 
+    // Only close if clicking the backdrop, not the dialog content
+    if (e.target === modal) close(); 
+  });
 
   bindZoomPan(viewport, canvas);
   if (zoomIn) zoomIn.addEventListener('click', () => { currentScale = Math.min(6, currentScale * 1.2); applyTransform(canvas); });
@@ -216,7 +358,7 @@ export function bindMapUI() {
   // re-render markers on resize to keep projection correct
   window.addEventListener('resize', () => { 
     if (modal.classList.contains('show')) {
-      renderMarkers(canvas, currentLocations, currentUserId);
+      renderMarkers(canvas, currentLocations, currentUserId, selectedUserId);
     }
   });
 }

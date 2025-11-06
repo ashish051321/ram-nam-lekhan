@@ -57,15 +57,25 @@
     <div class="map-dialog">
       <div class="map-header">
         <div class="map-title">Live Map</div>
-        <div class="map-legend"><span class="map-swatch"></span>Active writers</div>
+        <div class="map-legend">
+          <span class="map-swatch"></span>Active Writers
+        </div>
         <div class="map-tools">
           <button id="mapZoomOut" class="map-zoom">−</button>
           <button id="mapZoomIn" class="map-zoom">+</button>
           <button id="mapClose" class="map-close" aria-label="Close">✖</button>
         </div>
       </div>
-      <div class="map-viewport" id="mapViewport">
-        <div class="map-canvas" id="mapCanvas"></div>
+      <div class="map-content">
+        <div class="map-user-list" id="mapUserList">
+          <div class="map-list-header">Active Writers</div>
+          <div class="map-list-items" id="mapListItems">
+            <div class="map-list-loading">Loading users...</div>
+          </div>
+        </div>
+        <div class="map-viewport" id="mapViewport">
+          <div class="map-canvas" id="mapCanvas"></div>
+        </div>
       </div>
     </div>
   </div>
