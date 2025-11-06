@@ -173,7 +173,7 @@ function renderUserList(listContainer, locations, currentUserId, onUserClick) {
     item.dataset.userId = loc.userId;
     
     item.innerHTML = `
-      <div class="map-list-item-name">${isCurrentUser ? '👤 ' : ''}${loc.place || 'Unknown'}</div>
+      <div class="map-list-item-name">${isCurrentUser ? '👤 ' : ''}${loc.place || 'Unknown'}${isCurrentUser ? ' (You)' : ''}</div>
       <div class="map-list-item-details">
         <span class="map-list-item-count">${loc.ramCount} राम</span>
         <span class="map-list-item-time">${formatTime(loc.updatedAt)}</span>
