@@ -26,6 +26,20 @@
   </div>
 
   <div id="counter">0 ✍️</div>
+  <div id="scoreBoard" aria-live="polite">
+    <div class="score-item">
+      <span class="score-label">Session Best</span>
+      <span id="sessionBestScore" class="score-value">0</span>
+    </div>
+    <div class="score-item">
+      <span class="score-label">All-Time Best</span>
+      <span id="allTimeBestScore" class="score-value">0</span>
+    </div>
+    <div class="score-item">
+      <span class="score-label">Session Avg</span>
+      <span id="sessionAvgScore" class="score-value">0</span>
+    </div>
+  </div>
   <button id="toggleButton">Start Writing</button>
   <button id="backgroundSwitcher">🎨</button>
   <button id="soundToggle">🔊</button>
@@ -50,7 +64,7 @@
   </div>
 
   <!-- Removed inline script: migrated to JS modules in js/ -->
-  <script type="module" src="./js/index.js?v=20251101"></script>
+  <script type="module" src="./js/index.js?v=20251107"></script>
   
   <!-- Map Modal -->
   <div id="mapModal" class="map-modal">

@@ -9,6 +9,19 @@ const backgroundSwitcher = document.getElementById('backgroundSwitcher');
 const soundToggle = document.getElementById('soundToggle');
 const whatsappShare = document.getElementById('whatsappShare');
 const hanumanEl = document.getElementById('hanuman');
+const sessionBestEl = document.getElementById('sessionBestScore');
+const allTimeBestEl = document.getElementById('allTimeBestScore');
+const sessionAvgEl = document.getElementById('sessionAvgScore');
+
+const SCORE_STORAGE_KEY = 'ramTraceScoreStats';
+
+let canUseLocalStorage = true;
+
+let sessionBestScore = 0;
+let sessionScoreCount = 0;
+let sessionScoreTotal = 0;
+let sessionAverageScore = 0;
+let allTimeBestScore = 0;
 
 let count = 0;
 let isWritingEnabled = true;
@@ -30,6 +43,86 @@ const backgroundImages = [
   './lord-ram-background.jpg'
 ];
 let currentBackgroundIndex = 0;
+
+function formatScoreValue(value, fractionDigits = 0) {
+  if (!Number.isFinite(value)) return '0';
+  if (fractionDigits <= 0) {
+    return String(Math.round(value));
+  }
+  return value.toFixed(fractionDigits);
+}
+
+function updateScoreDisplay() {
+  if (sessionBestEl) {
+    sessionBestEl.textContent = formatScoreValue(sessionBestScore);
+  }
+  if (allTimeBestEl) {
+    allTimeBestEl.textContent = formatScoreValue(allTimeBestScore);
+  }
+  if (sessionAvgEl) {
+    const digits = sessionScoreCount > 0 ? 1 : 0;
+    sessionAvgEl.textContent = formatScoreValue(sessionAverageScore, digits);
+  }
+}
+
+function loadStoredScoreSnapshot() {
+  if (!canUseLocalStorage) return null;
+  try {
+    const raw = localStorage.getItem(SCORE_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.allTimeBest === 'number' && !Number.isNaN(parsed.allTimeBest)) {
+      allTimeBestScore = Math.max(0, Math.round(parsed.allTimeBest));
+    }
+    return parsed;
+  } catch (err) {
+    canUseLocalStorage = false;
+    console.warn('Unable to load stored trace scores', err);
+    return null;
+  }
+}
+
+function resetSessionScoreState() {
+  sessionBestScore = 0;
+  sessionScoreCount = 0;
+  sessionScoreTotal = 0;
+  sessionAverageScore = 0;
+}
+
+function persistScoreStats() {
+  if (!canUseLocalStorage) return;
+  try {
+    const payload = {
+      allTimeBest: allTimeBestScore,
+      sessionBest: sessionBestScore,
+      sessionAvg: Number(sessionAverageScore.toFixed(2)),
+      sessionCount: sessionScoreCount,
+      sessionTotal: sessionScoreTotal
+    };
+    localStorage.setItem(SCORE_STORAGE_KEY, JSON.stringify(payload));
+  } catch (err) {
+    canUseLocalStorage = false;
+    console.warn('Unable to persist trace score stats', err);
+  }
+}
+
+function recordTraceScore(rawScore) {
+  const normalized = Number.isFinite(rawScore) ? Math.max(0, Math.min(100, Math.round(rawScore))) : 0;
+  sessionScoreCount += 1;
+  sessionScoreTotal += normalized;
+  sessionBestScore = Math.max(sessionBestScore, normalized);
+  sessionAverageScore = sessionScoreCount > 0 ? sessionScoreTotal / sessionScoreCount : 0;
+  allTimeBestScore = Math.max(allTimeBestScore, normalized);
+  updateScoreDisplay();
+  persistScoreStats();
+}
+
+function initScoreTracking() {
+  loadStoredScoreSnapshot();
+  resetSessionScoreState();
+  updateScoreDisplay();
+  persistScoreStats();
+}
 
 function createAnimatedRam() {
   const ns = "http://www.w3.org/2000/svg";
@@ -149,7 +242,9 @@ function requestRamWrite(){
   const overlay = ensureTraceOverlay();
   if (overlay.isActive()) return;
   overlay.start()
-    .then(() => {
+    .then((result) => {
+      const ratio = typeof result?.ratio === 'number' ? result.ratio : 0;
+      recordTraceScore(ratio * 100);
       if (!isWritingEnabled) return;
       performWriteRam();
     })
@@ -204,6 +299,7 @@ function removeLast(){
 }
 
 export function initApp() {
+  initScoreTracking();
   if (pageEl) pageEl.focus({ preventScroll: true });
   toggleButton.textContent = "Pause";
   toggleButton.classList.remove('disabled');
