@@ -1,4 +1,5 @@
 import { startSession, incrementCount, endSession } from './history.js?v=20251101';
+import { createTraceOverlay } from './traceOverlay.js?v=20251107';
 
 const pageEl = document.getElementById('page');
 const lineEl = document.getElementById('line');
@@ -13,6 +14,7 @@ let count = 0;
 let isWritingEnabled = true;
 let isSoundEnabled = false;
 let audioElement;
+let traceOverlayInstance = null;
 
 const backgroundImages = [
   './ramji shabri.jpg',
@@ -123,7 +125,14 @@ function toggleSound() {
   }
 }
 
-function writeRam(){
+function ensureTraceOverlay(){
+  if (!traceOverlayInstance) {
+    traceOverlayInstance = createTraceOverlay({ text: 'राम' });
+  }
+  return traceOverlayInstance;
+}
+
+function performWriteRam(){
   if (!isWritingEnabled) return;
   if (count > 0) addGap();
   const svgWord = createAnimatedRam();
@@ -133,6 +142,20 @@ function writeRam(){
   incrementCount();
   triggerHanumanChanting();
   playRamSound();
+}
+
+function requestRamWrite(){
+  if (!isWritingEnabled) return;
+  const overlay = ensureTraceOverlay();
+  if (overlay.isActive()) return;
+  overlay.start()
+    .then(() => {
+      if (!isWritingEnabled) return;
+      performWriteRam();
+    })
+    .catch(() => {
+      // Overlay dismissed; do nothing.
+    });
 }
 
 function toggleWriting() {
@@ -187,6 +210,7 @@ export function initApp() {
   soundToggle.classList.add('disabled');
   soundToggle.textContent = "🔇";
   startSession();
+  ensureTraceOverlay();
 
   toggleButton.addEventListener("click", toggleWriting);
   backgroundSwitcher.addEventListener("click", switchBackground);
@@ -199,7 +223,7 @@ export function initApp() {
     if ((historyModal && historyModal.classList.contains('show')) || (mapModal && mapModal.classList.contains('show'))) return; // ignore keys when any modal open
     if (e.code === "Space") {
       e.preventDefault();
-      writeRam();
+      requestRamWrite();
     } else if (e.key === "Backspace") {
       e.preventDefault();
       removeLast();
@@ -217,7 +241,7 @@ export function initApp() {
     }
     const tag = (e.target.tagName || "").toLowerCase();
     if (["a","button","input","textarea","select","label"].includes(tag)) return;
-    writeRam();
+    requestRamWrite();
   }, { passive: true });
 
   window.addEventListener('beforeunload', () => {

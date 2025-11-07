@@ -152,6 +152,104 @@ svg.word{
   user-select: none;
 }
 
+/* Trace Overlay */
+.trace-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease;
+  z-index: 4500;
+}
+.trace-overlay--active {
+  opacity: 1;
+  visibility: visible;
+}
+.trace-overlay__scrim {
+  position: absolute;
+  inset: 0;
+}
+.trace-overlay__card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 18px;
+  padding: 24px 28px;
+  width: min(92vw, 520px);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  transform: translateY(12px);
+  transition: transform 0.25s ease;
+  z-index: 1;
+}
+.trace-overlay--active .trace-overlay__card {
+  transform: translateY(0);
+}
+.trace-overlay__title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  text-align: center;
+}
+.trace-overlay__canvas-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.trace-overlay__canvas {
+  width: min(80vw, 440px);
+  max-width: 100%;
+  height: auto;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6), 0 12px 24px rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.92);
+  touch-action: none;
+}
+.trace-overlay__progress-group {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.trace-overlay__progress-track {
+  flex: 1;
+  height: 8px;
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.trace-overlay__progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #fb923c, #ef4444);
+  border-radius: inherit;
+  transition: width 0.2s ease;
+}
+.trace-overlay__progress-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+  min-width: 44px;
+  text-align: right;
+}
+.trace-overlay__hint {
+  font-size: 13px;
+  color: #475569;
+  text-align: center;
+  line-height: 1.5;
+  max-width: 420px;
+}
+
 * { -webkit-user-select: none; user-select: none; }
 
 /* Floating Counter */
