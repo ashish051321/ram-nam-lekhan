@@ -39,7 +39,9 @@ export function startSession() {
     id: `${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
     startTime: new Date().toISOString(),
     endTime: null,
-    count: 0
+    count: 0,
+    bestScore: 0,
+    avgScore: 0
   };
   persistCurrent();
 }
@@ -48,6 +50,26 @@ export function incrementCount() {
   if (!currentSession) startSession();
   currentSession.count += 1;
   persistCurrent();
+}
+
+export function updateSessionScoreStats({ best, avg } = {}) {
+  if (!currentSession) return;
+  let changed = false;
+  if (Number.isFinite(best)) {
+    const normalizedBest = Math.max(0, Math.min(100, Math.round(best)));
+    if (currentSession.bestScore !== normalizedBest) {
+      currentSession.bestScore = normalizedBest;
+      changed = true;
+    }
+  }
+  if (Number.isFinite(avg)) {
+    const normalizedAvg = Math.max(0, Math.min(100, Number(avg.toFixed(1))));
+    if (currentSession.avgScore !== normalizedAvg) {
+      currentSession.avgScore = normalizedAvg;
+      changed = true;
+    }
+  }
+  if (changed) persistCurrent();
 }
 
 export function endSession() {
@@ -197,10 +219,17 @@ export function bindHistoryUI() {
       const item = document.createElement('div');
       item.className = 'history-item';
       const when = s.endTime ? s.endTime : s.startTime;
+      const bestScoreText = Number.isFinite(s?.bestScore) ? `${Math.round(s.bestScore)} / 100` : '–';
+      const avgValue = Number.isFinite(s?.avgScore) ? Number(s.avgScore) : null;
+      const avgScoreText = avgValue !== null ? `${avgValue.toFixed(1)} / 100` : '–';
       item.innerHTML = `
         <div class="history-item-row">
           <span class="history-count">${s.count} राम</span>
           <span class="history-time">${formatDate(when)}</span>
+        </div>
+        <div class="history-item-metrics">
+          <span class="history-metric"><span class="metric-label">Best</span> ${bestScoreText}</span>
+          <span class="history-metric"><span class="metric-label">Avg</span> ${avgScoreText}</span>
         </div>
       `;
       modalList.appendChild(item);

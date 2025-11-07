@@ -661,6 +661,9 @@ svg.word{
 .history-item-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .history-count { font-weight: 700; color: #111; }
 .history-time { color: #555; font-size: 13px; }
+.history-item-metrics { display: flex; gap: 16px; font-size: 12px; color: #4b5563; margin-top: 6px; }
+.history-metric { display: flex; align-items: baseline; gap: 4px; }
+.metric-label { font-weight: 600; color: #1f2937; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; }
 
 .history-footer { padding: 12px 16px; border-top: 1px solid rgba(0,0,0,0.06); display: flex; justify-content: flex-end; }
 .history-clear {

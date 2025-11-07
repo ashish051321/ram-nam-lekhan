@@ -1,4 +1,4 @@
-import { startSession, incrementCount, endSession } from './history.js?v=20251101';
+import { startSession, incrementCount, endSession, updateSessionScoreStats } from './history.js?v=20251107';
 import { createTraceOverlay } from './traceOverlay.js?v=20251107';
 
 const pageEl = document.getElementById('page');
@@ -115,6 +115,10 @@ function recordTraceScore(rawScore) {
   allTimeBestScore = Math.max(allTimeBestScore, normalized);
   updateScoreDisplay();
   persistScoreStats();
+  updateSessionScoreStats({
+    best: sessionBestScore,
+    avg: sessionAverageScore
+  });
 }
 
 function initScoreTracking() {
