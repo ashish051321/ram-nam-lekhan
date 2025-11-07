@@ -166,9 +166,11 @@ export function createTraceOverlay(options = {}) {
     ctx.beginPath();
   }
 
-  function blockEvent(evt) {
-    evt.preventDefault();
-    evt.stopPropagation();
+  function blockOutsideCard(evt) {
+    if (!cardEl.contains(evt.target)) {
+      evt.preventDefault();
+      evt.stopPropagation();
+    }
   }
 
   function attachEvents() {
@@ -176,8 +178,8 @@ export function createTraceOverlay(options = {}) {
     canvas.addEventListener('pointermove', handlePointerMove);
     canvas.addEventListener('pointerup', handlePointerUp);
     canvas.addEventListener('pointercancel', handlePointerUp);
-    overlayEl.addEventListener('click', blockEvent, true);
-    overlayEl.addEventListener('pointerdown', blockEvent, true);
+    overlayEl.addEventListener('click', blockOutsideCard, true);
+    overlayEl.addEventListener('pointerdown', blockOutsideCard, true);
     overlayEl.addEventListener('keydown', onKeyDown);
   }
 
@@ -186,8 +188,8 @@ export function createTraceOverlay(options = {}) {
     canvas.removeEventListener('pointermove', handlePointerMove);
     canvas.removeEventListener('pointerup', handlePointerUp);
     canvas.removeEventListener('pointercancel', handlePointerUp);
-    overlayEl.removeEventListener('click', blockEvent, true);
-    overlayEl.removeEventListener('pointerdown', blockEvent, true);
+    overlayEl.removeEventListener('click', blockOutsideCard, true);
+    overlayEl.removeEventListener('pointerdown', blockOutsideCard, true);
     overlayEl.removeEventListener('keydown', onKeyDown);
   }
 
