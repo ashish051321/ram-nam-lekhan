@@ -1,8 +1,7 @@
 const DEFAULT_WIDTH = 480;
 const DEFAULT_HEIGHT = 240;
-const COMPLETION_THRESHOLD = 0.7; // 70% coverage required
+const COMPLETION_THRESHOLD = 0.9; // coverage required before we accept the trace
 const SAMPLE_STEP = 2; // px between sampled points along the stroke
-const NEIGHBOR_RADIUS = 3; // px radius to credit coverage around sampled point
 
 function waitForFonts() {
   if (document.fonts && document.fonts.ready) {
@@ -19,6 +18,8 @@ export function createTraceOverlay(options = {}) {
   const fontSize = options.fontSize || Math.min(height * 0.75, 200);
   const guideStrokeWidth = options.guideStrokeWidth || Math.round(fontSize * 0.12);
   const userStrokeWidth = options.userStrokeWidth || Math.max(4, Math.round(fontSize * 0.07));
+  const neighborRadius = options.neighborRadius || Math.max(6, Math.round(guideStrokeWidth * 0.6));
+  const requireRatio = options.completionThreshold ?? COMPLETION_THRESHOLD;
 
   const overlayEl = document.createElement('div');
   overlayEl.className = 'trace-overlay';
@@ -36,6 +37,9 @@ export function createTraceOverlay(options = {}) {
         </div>
         <span class="trace-overlay__progress-text">0%</span>
       </div>
+      <div class="trace-overlay__actions">
+        <button type="button" class="trace-overlay__done" disabled>Done</button>
+      </div>
       <div class="trace-overlay__hint">Use your finger or mouse to trace the outline completely.</div>
     </div>
   `;
@@ -45,6 +49,7 @@ export function createTraceOverlay(options = {}) {
   const canvas = overlayEl.querySelector('.trace-overlay__canvas');
   const progressBar = overlayEl.querySelector('.trace-overlay__progress-bar');
   const progressText = overlayEl.querySelector('.trace-overlay__progress-text');
+  const doneButton = overlayEl.querySelector('.trace-overlay__done');
   const cardEl = overlayEl.querySelector('.trace-overlay__card');
 
   const ctx = canvas.getContext('2d');
@@ -65,13 +70,17 @@ export function createTraceOverlay(options = {}) {
   let drawing = false;
   let lastPoint = null;
   let completed = false;
+  let currentRatio = 0;
 
   function resetCoverage() {
     coverageMask.fill(0);
     coveredCount = 0;
     completed = false;
+    currentRatio = 0;
     progressBar.style.width = '0%';
     progressText.textContent = '0%';
+    doneButton.disabled = true;
+    doneButton.classList.remove('trace-overlay__done--ready');
   }
 
   function getCanvasPoint(evt) {
@@ -95,9 +104,9 @@ export function createTraceOverlay(options = {}) {
   }
 
   function markNeighborhood(x, y) {
-    for (let dy = -NEIGHBOR_RADIUS; dy <= NEIGHBOR_RADIUS; dy++) {
-      for (let dx = -NEIGHBOR_RADIUS; dx <= NEIGHBOR_RADIUS; dx++) {
-        if (dx * dx + dy * dy > NEIGHBOR_RADIUS * NEIGHBOR_RADIUS) continue;
+    for (let dy = -neighborRadius; dy <= neighborRadius; dy++) {
+      for (let dx = -neighborRadius; dx <= neighborRadius; dx++) {
+        if (dx * dx + dy * dy > neighborRadius * neighborRadius) continue;
         markPoint(x + dx, y + dy);
       }
     }
@@ -122,13 +131,16 @@ export function createTraceOverlay(options = {}) {
 
   function updateProgress() {
     if (!requiredCount) return;
-    const ratio = Math.min(1, coveredCount / requiredCount);
-    const percent = Math.round(ratio * 100);
+    currentRatio = Math.min(1, coveredCount / requiredCount);
+    const percent = Math.round(currentRatio * 100);
     progressBar.style.width = `${percent}%`;
     progressText.textContent = `${percent}%`;
-    if (!completed && ratio >= COMPLETION_THRESHOLD) {
-      completed = true;
-      setTimeout(() => finish(true), 120);
+    if (currentRatio >= requireRatio) {
+      doneButton.disabled = false;
+      doneButton.classList.add('trace-overlay__done--ready');
+    } else {
+      doneButton.disabled = false;
+      doneButton.classList.remove('trace-overlay__done--ready');
     }
   }
 
@@ -181,6 +193,7 @@ export function createTraceOverlay(options = {}) {
     overlayEl.addEventListener('click', blockOutsideCard, true);
     overlayEl.addEventListener('pointerdown', blockOutsideCard, true);
     overlayEl.addEventListener('keydown', onKeyDown);
+    doneButton.addEventListener('click', handleDoneClick);
   }
 
   function detachEvents() {
@@ -191,6 +204,7 @@ export function createTraceOverlay(options = {}) {
     overlayEl.removeEventListener('click', blockOutsideCard, true);
     overlayEl.removeEventListener('pointerdown', blockOutsideCard, true);
     overlayEl.removeEventListener('keydown', onKeyDown);
+    doneButton.removeEventListener('click', handleDoneClick);
   }
 
   function onKeyDown(evt) {
@@ -199,6 +213,15 @@ export function createTraceOverlay(options = {}) {
       evt.stopPropagation();
       finish(false);
     }
+  }
+
+  function handleDoneClick() {
+    if (!activePromise) return;
+    // Mark as completed if ratio meets threshold; otherwise still allow but do not set completed flag.
+    if (currentRatio >= requireRatio) {
+      completed = true;
+    }
+    finish(true, { ratio: currentRatio, completed });
   }
 
   function hideOverlay() {
@@ -218,7 +241,7 @@ export function createTraceOverlay(options = {}) {
     }, 0);
   }
 
-  function finish(success) {
+  function finish(success, details) {
     if (!activePromise) return;
     hideOverlay();
     const resolve = resolveActive;
@@ -228,7 +251,7 @@ export function createTraceOverlay(options = {}) {
     const promise = activePromise;
     activePromise = null;
     if (success) {
-      resolve();
+      resolve(details || {});
     } else {
       reject(new Error('Trace overlay dismissed'));
     }
