@@ -35,7 +35,7 @@ export function createTraceOverlay(options = {}) {
         <div class="trace-overlay__progress-track">
           <div class="trace-overlay__progress-bar" style="width:0%"></div>
         </div>
-        <span class="trace-overlay__progress-text">0%</span>
+        <span class="trace-overlay__progress-text">Score: 0 / 100</span>
       </div>
       <div class="trace-overlay__actions">
         <button type="button" class="trace-overlay__done" disabled>Done</button>
@@ -78,7 +78,7 @@ export function createTraceOverlay(options = {}) {
     completed = false;
     currentRatio = 0;
     progressBar.style.width = '0%';
-    progressText.textContent = '0%';
+    progressText.textContent = 'Score: 0 / 100';
     doneButton.disabled = true;
     doneButton.classList.remove('trace-overlay__done--ready');
   }
@@ -134,7 +134,7 @@ export function createTraceOverlay(options = {}) {
     currentRatio = Math.min(1, coveredCount / requiredCount);
     const percent = Math.round(currentRatio * 100);
     progressBar.style.width = `${percent}%`;
-    progressText.textContent = `${percent}%`;
+    progressText.textContent = `Score: ${percent} / 100`;
     if (currentRatio >= requireRatio) {
       doneButton.disabled = false;
       doneButton.classList.add('trace-overlay__done--ready');
