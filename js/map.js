@@ -1,3 +1,5 @@
+import { captureAndSendLocation } from './location.js?v=20251101';
+
 // Parse API configuration
 const PARSE_API_URL = 'https://parseapi.back4app.com/functions/getAllUsers';
 const PARSE_APP_ID = 'yKujveqA2lJWMJ0mJhWGYudoMncTnfE7a5HKoaNZ';
@@ -232,6 +234,7 @@ export function bindMapUI() {
   const zoomIn = document.getElementById('mapZoomIn');
   const zoomOut = document.getElementById('mapZoomOut');
   const listContainer = document.getElementById('mapListItems');
+  const globalLoadingOverlay = document.getElementById('mapGlobalLoading');
   const listHeader = document.querySelector('.map-list-header');
   
   // Debug: log which elements are missing
@@ -275,6 +278,18 @@ export function bindMapUI() {
     centerMapOnUser(userId);
   }
 
+  function showLoadingOverlay() {
+    if (!globalLoadingOverlay) return;
+    globalLoadingOverlay.hidden = false;
+    globalLoadingOverlay.classList.add('show');
+  }
+
+  function hideLoadingOverlay() {
+    if (!globalLoadingOverlay) return;
+    globalLoadingOverlay.classList.remove('show');
+    globalLoadingOverlay.hidden = true;
+  }
+
   function updateListHeader(count) {
     if (listHeader) {
       listHeader.textContent = `Active Writers (${count})`;
@@ -292,44 +307,48 @@ export function bindMapUI() {
     canvas.innerHTML = '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #666; font-size: 14px;">Loading users...</div>';
     
     // Fetch users from API
-    const users = await fetchAllUsers();
-    currentLocations = users;
+    try {
+      const users = await fetchAllUsers();
+      currentLocations = users;
     
-    // Update header with count
-    updateListHeader(currentLocations.length);
+      // Update header with count
+      updateListHeader(currentLocations.length);
     
-    // Render user list (only if container exists)
-    if (listContainer) {
-      renderUserList(listContainer, currentLocations, currentUserId, highlightUserOnMap);
-    }
-    
-    // Render markers with real data
-    renderMarkers(canvas, currentLocations, currentUserId, selectedUserId);
-    
-    // Center view on first user or India if no users
-    // Use the original canvas dimensions (not transformed) for accurate projection
-    const width = canvas.offsetWidth || parseInt(getComputedStyle(canvas).width) || 1000;
-    const height = canvas.offsetHeight || parseInt(getComputedStyle(canvas).height) || 500;
-    
-    let centerLat = 22;
-    let centerLng = 78;
-    
-    if (currentLocations.length > 0) {
-      // Center on current user if available, otherwise first user
-      const currentUserLoc = currentLocations.find(loc => loc.userId === currentUserId);
-      if (currentUserLoc) {
-        centerLat = currentUserLoc.latitude;
-        centerLng = currentUserLoc.longitude;
-      } else {
-        centerLat = currentLocations[0].latitude;
-        centerLng = currentLocations[0].longitude;
+      // Render user list (only if container exists)
+      if (listContainer) {
+        renderUserList(listContainer, currentLocations, currentUserId, highlightUserOnMap);
       }
-    }
     
-    const center = project(centerLat, centerLng, width, height);
-    translateX = (width / 2) - center.x;
-    translateY = (height / 2) - center.y;
-    applyTransform(canvas);
+      // Render markers with real data
+      renderMarkers(canvas, currentLocations, currentUserId, selectedUserId);
+    
+      // Center view on first user or India if no users
+      // Use the original canvas dimensions (not transformed) for accurate projection
+      const width = canvas.offsetWidth || parseInt(getComputedStyle(canvas).width) || 1000;
+      const height = canvas.offsetHeight || parseInt(getComputedStyle(canvas).height) || 500;
+    
+      let centerLat = 22;
+      let centerLng = 78;
+    
+      if (currentLocations.length > 0) {
+        // Center on current user if available, otherwise first user
+        const currentUserLoc = currentLocations.find(loc => loc.userId === currentUserId);
+        if (currentUserLoc) {
+          centerLat = currentUserLoc.latitude;
+          centerLng = currentUserLoc.longitude;
+        } else {
+          centerLat = currentLocations[0].latitude;
+          centerLng = currentLocations[0].longitude;
+        }
+      }
+    
+      const center = project(centerLat, centerLng, width, height);
+      translateX = (width / 2) - center.x;
+      translateY = (height / 2) - center.y;
+      applyTransform(canvas);
+    } finally {
+      hideLoadingOverlay();
+    }
   }
 
   function open() {
@@ -347,12 +366,19 @@ export function bindMapUI() {
   function close() { 
     modal.classList.remove('show');
     selectedUserId = null;
+    hideLoadingOverlay();
   }
 
   console.log('Attaching map button click handler...', mapBtn);
-  mapBtn.addEventListener('click', (e) => {
+  mapBtn.addEventListener('click', async (e) => {
     e.preventDefault();
     e.stopPropagation();
+    showLoadingOverlay();
+    try {
+      await captureAndSendLocation();
+    } catch (error) {
+      console.warn('Failed to update location before opening map:', error);
+    }
     open();
   });
   if (closeBtn) closeBtn.addEventListener('click', close);
